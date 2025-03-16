@@ -1,3 +1,26 @@
+--[[
+
+██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+█░░░░░░██████████░░░░░░█░░░░░░░░░░░░░░█░░░░░░░░░░░░░░░░███░░░░░░░░░░░░░░█░░░░░░██░░░░░░█░░░░░░░░░░░░░░░░███░░░░░░░░██░░░░░░░░█
+█░░▄▀░░░░░░░░░░░░░░▄▀░░█░░▄▀▄▀▄▀▄▀▄▀░░█░░▄▀▄▀▄▀▄▀▄▀▄▀░░███░░▄▀▄▀▄▀▄▀▄▀░░█░░▄▀░░██░░▄▀░░█░░▄▀▄▀▄▀▄▀▄▀▄▀░░███░░▄▀▄▀░░██░░▄▀▄▀░░█
+█░░▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀░░█░░▄▀░░░░░░░░░░█░░▄▀░░░░░░░░▄▀░░███░░▄▀░░░░░░░░░░█░░▄▀░░██░░▄▀░░█░░▄▀░░░░░░░░▄▀░░███░░░░▄▀░░██░░▄▀░░░░█
+█░░▄▀░░░░░░▄▀░░░░░░▄▀░░█░░▄▀░░█████████░░▄▀░░████░░▄▀░░███░░▄▀░░█████████░░▄▀░░██░░▄▀░░█░░▄▀░░████░░▄▀░░█████░░▄▀▄▀░░▄▀▄▀░░███
+█░░▄▀░░██░░▄▀░░██░░▄▀░░█░░▄▀░░░░░░░░░░█░░▄▀░░░░░░░░▄▀░░███░░▄▀░░█████████░░▄▀░░██░░▄▀░░█░░▄▀░░░░░░░░▄▀░░█████░░░░▄▀▄▀▄▀░░░░███
+█░░▄▀░░██░░▄▀░░██░░▄▀░░█░░▄▀▄▀▄▀▄▀▄▀░░█░░▄▀▄▀▄▀▄▀▄▀▄▀░░███░░▄▀░░█████████░░▄▀░░██░░▄▀░░█░░▄▀▄▀▄▀▄▀▄▀▄▀░░███████░░░░▄▀░░░░█████
+█░░▄▀░░██░░░░░░██░░▄▀░░█░░▄▀░░░░░░░░░░█░░▄▀░░yue<3▀░░░░███░░▄▀░░█████████░░▄▀░░██░░▄▀░░█░░▄▀░░░░░░▄▀░░░░█████████░░▄▀░░███████
+█░░▄▀░░██████████░░▄▀░░█░░▄▀░░█████████░░▄▀░░██░░▄▀░░█████░░▄▀░░█████████░░▄▀░░██░░▄▀░░█░░▄▀░░██░░▄▀░░███████████░░▄▀░░███████
+█░░▄▀░░██████████░░▄▀░░█░░▄▀░░░░░░░░░░█░░▄▀░░██░░▄▀░░░░░░█░░▄▀░░░░░░░░░░█░░▄▀░░░░░░▄▀░░█░░▄▀░░██░░▄▀░░░░░░███████░░▄▀░░███████
+█░░▄▀░░██████████░░▄▀░░█░░▄▀▄▀▄▀▄▀▄▀░░█░░▄▀░░██░░▄▀▄▀▄▀░░█░░▄▀▄▀▄▀▄▀▄▀░░█░░▄▀▄▀▄▀▄▀▄▀░░█░░▄▀░░██░░▄▀▄▀▄▀░░███████░░▄▀░░███████
+█░░░░░░██████████░░░░░░█░░░░░░░░░░░░░░█░░░░░░██░░░░░░░░░░█░░░░░░░░░░░░░░█░░░░░░░░░░░░░░█░░░░░░██░░░░░░░░░░███████░░░░░░███████
+██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+
+edited: 1/26
+developers:
+discord Abstract#8007
+discord Deity#0228
+
+]]
+
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -25,76 +48,45 @@ local Library = {
 			WeakText = Color3.fromHSV(0, 0, 172/255)
 		},
 		Dark = {
-			Main = Color3.fromRGB(25, 25, 30),
-			Secondary = Color3.fromRGB(45, 45, 50),
-			Tertiary = Color3.fromRGB(60, 120, 170),
+			Main = Color3.fromRGB(30, 30, 35),
+			Secondary = Color3.fromRGB(50, 50, 55),
+			Tertiary = Color3.fromRGB(70, 130, 180),
 
 			StrongText = Color3.fromHSV(0, 0, 1),		
-			WeakText = Color3.fromHSV(0, 0, 180/255)
+			WeakText = Color3.fromHSV(0, 0, 172/255)
 		},
 		Rust = {
-			Main = Color3.fromRGB(32, 30, 28),
-			Secondary = Color3.fromRGB(60, 58, 56),
+			Main = Color3.fromRGB(37, 35, 33),
+			Secondary = Color3.fromRGB(65, 63, 63),
 			Tertiary = Color3.fromRGB(237, 94, 38),
 
 			StrongText = Color3.fromHSV(0, 0, 1),		
 			WeakText = Color3.fromHSV(0, 0, 172/255)
 		},
 		Aqua = {
-			Main = Color3.fromRGB(15, 17, 17),
-			Secondary = Color3.fromRGB(40, 45, 45),
+			Main = Color3.fromRGB(19, 21, 21),
+			Secondary = Color3.fromRGB(65, 63, 63),
 			Tertiary = Color3.fromRGB(51, 153, 137),
 
 			StrongText = Color3.fromHSV(0, 0, 1),        
-			WeakText = Color3.fromHSV(0, 0, 180/255)
+			WeakText = Color3.fromHSV(0, 0, 172/255)
 		},
-		DarkSelix = {
-			Main = Color3.fromRGB(15, 15, 20),
-			Secondary = Color3.fromRGB(30, 30, 40),
-			Tertiary = Color3.fromRGB(120, 80, 200),
+		Vaporwave = {},
+		OperaGX = {},
+		VisualStudio = {}
+	},
+	ColorPickerStyles = {
+		Legacy = 0,
+		Modern = 1
+	},
+	Toggled = true,
+	ThemeObjects = {
+		Main = {},
+		Secondary = {},
+		Tertiary = {},
 
-			StrongText = Color3.fromHSV(0, 0, 1),
-			WeakText = Color3.fromHSV(0, 0, 180/255)
-		},
-		Lovely = {
-			Main = Color3.fromRGB(40, 20, 60),
-			Secondary = Color3.fromRGB(60, 30, 90),
-			Tertiary = Color3.fromRGB(150, 70, 200),
-
-			StrongText = Color3.fromHSV(0, 0, 1),
-			WeakText = Color3.fromHSV(0, 0, 190/255)
-		},
-		White = {
-			Main = Color3.fromRGB(240, 240, 240),
-			Secondary = Color3.fromRGB(220, 220, 220),
-			Tertiary = Color3.fromRGB(200, 200, 200),
-
-			StrongText = Color3.fromRGB(30, 30, 30),
-			WeakText = Color3.fromRGB(80, 80, 80)
-		},
-		Midnight = {
-			Main = Color3.fromRGB(18, 18, 24),
-			Secondary = Color3.fromRGB(28, 28, 36),
-			Tertiary = Color3.fromRGB(40, 96, 144),
-
-			StrongText = Color3.fromHSV(0, 0, 1),
-			WeakText = Color3.fromHSV(0, 0, 180/255)
-		},
-		Forest = {
-			Main = Color3.fromRGB(20, 30, 25),
-			Secondary = Color3.fromRGB(30, 45, 35),
-			Tertiary = Color3.fromRGB(40, 120, 80),
-
-			StrongText = Color3.fromHSV(0, 0, 1),
-			WeakText = Color3.fromHSV(0, 0, 180/255)
-		},
-		Ember = {
-			Main = Color3.fromRGB(30, 20, 20),
-			Secondary = Color3.fromRGB(45, 30, 30),
-			Tertiary = Color3.fromRGB(180, 70, 50),
-
-			StrongText = Color3.fromHSV(0, 0, 1),
-			WeakText = Color3.fromHSV(0, 0, 180/255)
+		StrongText = {},
+		WeakText = {}
 	},
 	WelcomeText = nil,
 	DisplayName = nil,
