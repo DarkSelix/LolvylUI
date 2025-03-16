@@ -12,46 +12,90 @@ local Library = {
 			Main = Color3.fromHSV(262/360, 60/255, 34/255),
 			Secondary = Color3.fromHSV(240/360, 40/255, 63/255),
 			Tertiary = Color3.fromHSV(260/360, 60/255, 148/255),
-
 			StrongText = Color3.fromHSV(0, 0, 1),		
-			WeakText = Color3.fromHSV(0, 0, 172/255)
+			WeakText = Color3.fromHSV(0, 0, 172/255),
+			Accent = Color3.fromHSV(262/360, 60/255, 180/255)
 		},
 		Serika = {
 			Main = Color3.fromRGB(50, 52, 55),
 			Secondary = Color3.fromRGB(80, 82, 85),
 			Tertiary = Color3.fromRGB(226, 183, 20),
-
 			StrongText = Color3.fromHSV(0, 0, 1),		
-			WeakText = Color3.fromHSV(0, 0, 172/255)
+			WeakText = Color3.fromHSV(0, 0, 172/255),
+			Accent = Color3.fromRGB(255, 210, 30)
 		},
 		Dark = {
-			Main = Color3.fromRGB(30, 30, 35),
-			Secondary = Color3.fromRGB(50, 50, 55),
-			Tertiary = Color3.fromRGB(70, 130, 180),
-
+			Main = Color3.fromRGB(25, 25, 30),
+			Secondary = Color3.fromRGB(45, 45, 50),
+			Tertiary = Color3.fromRGB(60, 120, 170),
 			StrongText = Color3.fromHSV(0, 0, 1),		
-			WeakText = Color3.fromHSV(0, 0, 172/255)
+			WeakText = Color3.fromHSV(0, 0, 180/255),
+			Accent = Color3.fromRGB(80, 140, 190)
 		},
 		Rust = {
-			Main = Color3.fromRGB(37, 35, 33),
-			Secondary = Color3.fromRGB(65, 63, 63),
+			Main = Color3.fromRGB(32, 30, 28),
+			Secondary = Color3.fromRGB(60, 58, 56),
 			Tertiary = Color3.fromRGB(237, 94, 38),
-
 			StrongText = Color3.fromHSV(0, 0, 1),		
-			WeakText = Color3.fromHSV(0, 0, 172/255)
+			WeakText = Color3.fromHSV(0, 0, 172/255),
+			Accent = Color3.fromRGB(255, 120, 60)
 		},
 		Aqua = {
-			Main = Color3.fromRGB(19, 21, 21),
-			Secondary = Color3.fromRGB(65, 63, 63),
+			Main = Color3.fromRGB(15, 17, 17),
+			Secondary = Color3.fromRGB(40, 45, 45),
 			Tertiary = Color3.fromRGB(51, 153, 137),
-
 			StrongText = Color3.fromHSV(0, 0, 1),        
-			WeakText = Color3.fromHSV(0, 0, 172/255)
+			WeakText = Color3.fromHSV(0, 0, 180/255),
+			Accent = Color3.fromRGB(65, 175, 160)
 		},
-		Vaporwave = {},
-		OperaGX = {},
-		VisualStudio = {}
-	},
+		DarkSelix = {
+			Main = Color3.fromRGB(15, 15, 20),
+			Secondary = Color3.fromRGB(30, 30, 40),
+			Tertiary = Color3.fromRGB(120, 80, 200),
+			StrongText = Color3.fromHSV(0, 0, 1),
+			WeakText = Color3.fromHSV(0, 0, 180/255),
+			Accent = Color3.fromRGB(140, 100, 220)
+		},
+		Lovely = {
+			Main = Color3.fromRGB(40, 20, 60),
+			Secondary = Color3.fromRGB(60, 30, 90),
+			Tertiary = Color3.fromRGB(150, 70, 200),
+			StrongText = Color3.fromHSV(0, 0, 1),
+			WeakText = Color3.fromHSV(0, 0, 190/255),
+			Accent = Color3.fromRGB(180, 100, 220)
+		},
+		White = {
+			Main = Color3.fromRGB(240, 240, 240),
+			Secondary = Color3.fromRGB(220, 220, 220),
+			Tertiary = Color3.fromRGB(200, 200, 200),
+			StrongText = Color3.fromRGB(30, 30, 30),
+			WeakText = Color3.fromRGB(80, 80, 80),
+			Accent = Color3.fromRGB(120, 120, 120)
+		},
+		Midnight = {
+			Main = Color3.fromRGB(18, 18, 24),
+			Secondary = Color3.fromRGB(28, 28, 36),
+			Tertiary = Color3.fromRGB(40, 96, 144),
+			StrongText = Color3.fromHSV(0, 0, 1),
+			WeakText = Color3.fromHSV(0, 0, 180/255),
+			Accent = Color3.fromRGB(60, 120, 180)
+		},
+		Forest = {
+			Main = Color3.fromRGB(20, 30, 25),
+			Secondary = Color3.fromRGB(30, 45, 35),
+			Tertiary = Color3.fromRGB(40, 120, 80),
+			StrongText = Color3.fromHSV(0, 0, 1),
+			WeakText = Color3.fromHSV(0, 0, 180/255),
+			Accent = Color3.fromRGB(60, 180, 100)
+		},
+		Ember = {
+			Main = Color3.fromRGB(30, 20, 20),
+			Secondary = Color3.fromRGB(45, 30, 30),
+			Tertiary = Color3.fromRGB(180, 70, 50),
+			StrongText = Color3.fromHSV(0, 0, 1),
+			WeakText = Color3.fromHSV(0, 0, 180/255),
+			Accent = Color3.fromRGB(220, 100, 60)
+		},
 	ColorPickerStyles = {
 		Legacy = 0,
 		Modern = 1
@@ -69,7 +113,7 @@ local Library = {
 	DisplayName = nil,
 	DragSpeed = 0.06,
 	LockDragging = false,
-	ToggleKey = Enum.KeyCode.Home,
+	ToggleKey = Enum.KeyCode.RightShift,
 	UrlLabel = nil,
 	Url = nil
 
@@ -347,22 +391,6 @@ function Library:lighten(color, f)
 	f = 1 - ((f or 15) / 80)
 	return Color3.fromHSV(h, math.clamp(s*f, 0, 1), math.clamp(v/f, 0, 1))
 end
-
---[[ old lighten/darken functions, may revert if contrast gets fucked up
-
-	function Library:darken(color, f)
-		local h, s, v = Color3.toHSV(color)
-		f = f or 15
-		return Color3.fromHSV(h, s, math.clamp(v - (f/255), 0, 1))
-	end
-
-	function Library:lighten(color, f)
-		local h, s, v = Color3.toHSV(color)
-		f = f or 15
-		return Color3.fromHSV(h, s, math.clamp(v + (f/255), 0, 1))
-	end
-	
-]]
 
 local updateSettings = function() end
 
