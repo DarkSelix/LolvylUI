@@ -1,84 +1,137 @@
+--[[
+    LolvyUI - Modern UI Library for Roblox
+    Author: Lolvy
+    License: MIT
+    Version: 1.0.0
+]]
+
 local LolvyUI = {}
 LolvyUI.__index = LolvyUI
 
--- Configurações padrão
+-- Default configurations
 local DEFAULT_CONFIG = {
-    Title = "Horizontal Hub",
+    Title = "LolvyUI",
     Theme = {
-        Background = Color3.fromRGB(30, 15, 30), -- Roxo muito escuro quase carmesim/preto
-        Button = Color3.fromRGB(45, 25, 45),     -- Botões um pouco mais forte
+        Background = Color3.fromRGB(30, 15, 30),
+        Button = Color3.fromRGB(45, 25, 45),
         ButtonHover = Color3.fromRGB(55, 35, 55),
-        ToggleOn = Color3.fromRGB(165, 25, 50),  -- Carmesim forte para toggle ativado
+        ToggleOn = Color3.fromRGB(165, 25, 50),
         Text = Color3.fromRGB(230, 230, 230),
         TabSelected = Color3.fromRGB(60, 35, 60),
         TabUnselected = Color3.fromRGB(40, 20, 40)
     },
     KeyBind = Enum.KeyCode.C,
-    Image = "rbxassetid://0", -- Imagem de fundo (substitua pelo ID)
-    MobileButtonImage = "rbxassetid://0" -- Imagem do botão mobile (substitua pelo ID)
+    Image = "rbxassetid://0",
+    MobileButtonImage = "rbxassetid://0"
 }
 
--- Criar uma nova instância do hub
-function HorizontalHub.new(config)
-    local self = setmetatable({}, HorizontalHub)
-    
-    -- Mesclar configurações fornecidas com padrões
-    self.config = {}
-    for key, value in pairs(DEFAULT_CONFIG) do
-        if type(value) == "table" then
-            self.config[key] = {}
-            for subKey, subValue in pairs(value) do
-                self.config[key][subKey] = (config and config[key] and config[key][subKey] ~= nil) and config[key][subKey] or subValue
-            end
+-- Utility functions
+local function deepCopy(original)
+    local copy = {}
+    for k, v in pairs(original) do
+        if type(v) == "table" then
+            copy[k] = deepCopy(v)
         else
-            self.config[key] = (config and config[key] ~= nil) and config[key] or value
+            copy[k] = v
+        end
+    end
+    return copy
+end
+
+local function validateConfig(config)
+    if not config then return deepCopy(DEFAULT_CONFIG) end
+    
+    local validatedConfig = deepCopy(DEFAULT_CONFIG)
+    
+    -- Validate and merge theme
+    if config.Theme then
+        for key, defaultValue in pairs(DEFAULT_CONFIG.Theme) do
+            if config.Theme[key] and typeof(config.Theme[key]) == "Color3" then
+                validatedConfig.Theme[key] = config.Theme[key]
+            end
         end
     end
     
-    -- Estado interno
+    -- Validate other fields
+    if config.Title and type(config.Title) == "string" then
+        validatedConfig.Title = config.Title
+    end
+    
+    if config.KeyBind and typeof(config.KeyBind) == "EnumItem" and config.KeyBind.EnumType == Enum.KeyCode then
+        validatedConfig.KeyBind = config.KeyBind
+    end
+    
+    if config.Image and type(config.Image) == "string" then
+        validatedConfig.Image = config.Image
+    end
+    
+    if config.MobileButtonImage and type(config.MobileButtonImage) == "string" then
+        validatedConfig.MobileButtonImage = config.MobileButtonImage
+    end
+    
+    return validatedConfig
+end
+
+-- Create a new instance of the hub
+function LolvyUI.new(config)
+    local self = setmetatable({}, LolvyUI)
+    
+    -- Validate and set configuration
+    self.config = validateConfig(config)
+    
+    -- Initialize state
     self.tabs = {}
     self.currentTab = nil
     self.visible = false
     self.notifications = {}
+    self.destroyed = false
     
-    -- Inicializar a GUI
+    -- Initialize GUI
     self:Initialize()
+    
+    -- Setup cleanup
+    game:GetService("Players").LocalPlayer.CharacterRemoving:Connect(function()
+        if not self.destroyed then
+            self:Destroy()
+        end
+    end)
     
     return self
 end
 
--- Inicializar a interface
+-- Initialize the interface
 function LolvyUI:Initialize()
+    if self.destroyed then return end
+    
     local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    
+    -- Create ScreenGui
     local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "HorizontalHubGui"
+    screenGui.Name = "LolvyUIGui"
     screenGui.ResetOnSpawn = false
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     screenGui.IgnoreGuiInset = true
     screenGui.Parent = playerGui
     
-    -- Armazenar referência
     self.gui = screenGui
     
-    -- Criar a UI principal
+    -- Create main UI
     self:CreateMainUI()
     
-    -- Configurar sistema de redimensionamento
+    -- Setup systems
     self:SetupResizing()
-    
-    -- Configurar keybind
     self:SetupKeybind()
-    
-    -- Detectar se é dispositivo móvel
     self:SetupMobileSupport()
     
-    -- Inicialmente ocultar o hub
+    -- Initially hide
     self.mainFrame.Visible = false
 end
 
--- Criar a UI principal
+-- Create the main UI
 function LolvyUI:CreateMainUI()
-    -- Título acima da tela
+    if self.destroyed then return end
+    
+    -- Create title label
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Name = "TitleLabel"
     titleLabel.Size = UDim2.new(0, 300, 0, 30)
@@ -91,7 +144,7 @@ function LolvyUI:CreateMainUI()
     titleLabel.Parent = self.gui
     self.titleLabel = titleLabel
     
-    -- Frame principal
+    -- Create main frame
     local mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"
     mainFrame.Size = UDim2.new(0.9, 0, 0.6, 0)
@@ -100,7 +153,7 @@ function LolvyUI:CreateMainUI()
     mainFrame.BorderSizePixel = 0
     mainFrame.Parent = self.gui
     
-    -- Cantos arredondados e sombra
+    -- Add corner and shadow
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = mainFrame
@@ -110,7 +163,7 @@ function LolvyUI:CreateMainUI()
     shadow.Size = UDim2.new(1, 20, 1, 20)
     shadow.Position = UDim2.new(0, -10, 0, -10)
     shadow.BackgroundTransparency = 1
-    shadow.Image = "rbxassetid://5028857084" -- Imagem de sombra
+    shadow.Image = "rbxassetid://5028857084"
     shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
     shadow.ImageTransparency = 0.6
     shadow.ScaleType = Enum.ScaleType.Slice
@@ -118,8 +171,8 @@ function LolvyUI:CreateMainUI()
     shadow.ZIndex = -1
     shadow.Parent = mainFrame
     
-    -- Imagem de fundo
-    if self.config.Image and self.config.Image ~= "rbxassetid://0" then
+    -- Add background image if specified
+    if self.config.Image ~= "rbxassetid://0" then
         local bgImage = Instance.new("ImageLabel")
         bgImage.Name = "BackgroundImage"
         bgImage.Size = UDim2.new(1, 0, 1, 0)
@@ -130,12 +183,11 @@ function LolvyUI:CreateMainUI()
         bgImage.Parent = mainFrame
     end
     
-    -- Container para abas (lado esquerdo)
+    -- Create tabs container
     local tabsContainer = Instance.new("Frame")
     tabsContainer.Name = "TabsContainer"
     tabsContainer.Size = UDim2.new(0.2, 0, 1, 0)
-    tabsContainer.Position = UDim2.new(0, 0, 0, 0)
-    tabsContainer.BackgroundColor3 = Color3.fromRGB(20, 10, 20) -- Um pouco mais escuro que o fundo
+    tabsContainer.BackgroundColor3 = Color3.fromRGB(20, 10, 20)
     tabsContainer.BorderSizePixel = 0
     tabsContainer.Parent = mainFrame
     
@@ -143,15 +195,7 @@ function LolvyUI:CreateMainUI()
     tabsCorner.CornerRadius = UDim.new(0, 8)
     tabsCorner.Parent = tabsContainer
     
-    -- Garantir que apenas o lado esquerdo tenha cantos arredondados
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0.5, 0, 1, 0)
-    frame.Position = UDim2.new(0.5, 0, 0, 0)
-    frame.BackgroundColor3 = Color3.fromRGB(20, 10, 20)
-    frame.BorderSizePixel = 0
-    frame.Parent = tabsContainer
-    
-    -- Contêiner de abas com rolagem
+    -- Create tabs list
     local tabsList = Instance.new("ScrollingFrame")
     tabsList.Name = "TabsList"
     tabsList.Size = UDim2.new(1, 0, 1, -10)
@@ -159,7 +203,7 @@ function LolvyUI:CreateMainUI()
     tabsList.BackgroundTransparency = 1
     tabsList.ScrollBarThickness = 4
     tabsList.ScrollBarImageColor3 = self.config.Theme.ToggleOn
-    tabsList.CanvasSize = UDim2.new(0, 0, 0, 0) -- Será atualizado dinamicamente
+    tabsList.CanvasSize = UDim2.new(0, 0, 0, 0)
     tabsList.Parent = tabsContainer
     
     local tabsListLayout = Instance.new("UIListLayout")
@@ -167,7 +211,7 @@ function LolvyUI:CreateMainUI()
     tabsListLayout.Padding = UDim.new(0, 5)
     tabsListLayout.Parent = tabsList
     
-    -- Container de conteúdo (lado direito)
+    -- Create content container
     local contentContainer = Instance.new("Frame")
     contentContainer.Name = "ContentContainer"
     contentContainer.Size = UDim2.new(0.8, 0, 1, 0)
@@ -176,40 +220,49 @@ function LolvyUI:CreateMainUI()
     contentContainer.BorderSizePixel = 0
     contentContainer.Parent = mainFrame
     
-    -- Armazenar referências
+    -- Store references
     self.mainFrame = mainFrame
     self.tabsContainer = tabsContainer
     self.tabsList = tabsList
     self.contentContainer = contentContainer
 end
 
--- Configurar redimensionamento responsivo
-function HorizontalHub:SetupResizing()
+-- Setup responsive resizing
+function LolvyUI:SetupResizing()
+    if self.destroyed then return end
+    
+    local function updateSize()
+        local viewportSize = workspace.CurrentCamera.ViewportSize
+        local widthRatio = math.clamp(viewportSize.X / 1920, 0.6, 1)
+        local heightRatio = math.clamp(viewportSize.Y / 1080, 0.6, 1)
+        
+        self.mainFrame.Size = UDim2.new(0.9 * widthRatio, 0, 0.6 * heightRatio, 0)
+        self.mainFrame.Position = UDim2.new(0.05 + (0.05 * (1 - widthRatio)), 0, 0.2 + (0.05 * (1 - heightRatio)), 0)
+        
+        -- Update tabs list canvas size
+        if #self.tabs > 0 then
+            self.tabsList.CanvasSize = UDim2.new(0, 0, 0, (#self.tabs * 40) + (5 * (#self.tabs - 1)))
+        end
+    end
+    
+    -- Connect to RenderStepped with throttling
+    local lastUpdate = 0
     game:GetService("RunService").RenderStepped:Connect(function()
-        -- Atualizar a posição e tamanho com base no tamanho da tela
-        self:UpdateSize()
+        if self.destroyed then return end
+        local now = tick()
+        if now - lastUpdate >= 0.1 then -- Update every 0.1 seconds
+            lastUpdate = now
+            updateSize()
+        end
     end)
 end
 
--- Atualizar o tamanho do hub com base na tela
-function LolvyUI:UpdateSize()
-    local viewportSize = workspace.CurrentCamera.ViewportSize
-    
-    -- Ajustar tamanho baseado no tamanho da tela
-    local widthRatio = math.clamp(viewportSize.X / 1920, 0.6, 1)
-    local heightRatio = math.clamp(viewportSize.Y / 1080, 0.6, 1)
-    
-    self.mainFrame.Size = UDim2.new(0.9 * widthRatio, 0, 0.6 * heightRatio, 0)
-    self.mainFrame.Position = UDim2.new(0.05 + (0.05 * (1 - widthRatio)), 0, 0.2 + (0.05 * (1 - heightRatio)), 0)
-    
-    -- Atualizar tamanho da lista de abas
-    self.tabsList.CanvasSize = UDim2.new(0, 0, 0, (#self.tabs * 40) + (5 * (#self.tabs - 1)))
-end
-
--- Configurar keybind para abrir/fechar o hub
+-- Setup keybind
 function LolvyUI:SetupKeybind()
+    if self.destroyed then return end
+    
     game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
+        if self.destroyed or gameProcessed then return end
         
         if input.KeyCode == self.config.KeyBind then
             self:ToggleVisibility()
@@ -217,33 +270,50 @@ function LolvyUI:SetupKeybind()
     end)
 end
 
--- Configurar suporte para dispositivos móveis
+-- Setup mobile support
 function LolvyUI:SetupMobileSupport()
+    if self.destroyed then return end
+    
     local UserInputService = game:GetService("UserInputService")
     
     if UserInputService.TouchEnabled then
-        -- Criar botão móvel
+        -- Create mobile button
         local mobileButton = Instance.new("ImageButton")
         mobileButton.Name = "MobileButton"
         mobileButton.Size = UDim2.new(0, 40, 0, 40)
         mobileButton.Position = UDim2.new(0.1, 0, 0.8, 0)
         mobileButton.BackgroundColor3 = self.config.Theme.Button
-        mobileButton.Image = self.config.MobileButtonImage ~= "rbxassetid://0" and self.config.MobileButtonImage or "rbxassetid://3926307971"
+        mobileButton.Image = self.config.MobileButtonImage ~= "rbxassetid://0" 
+            and self.config.MobileButtonImage 
+            or "rbxassetid://3926307971"
         mobileButton.ImageRectOffset = Vector2.new(764, 764)
         mobileButton.ImageRectSize = Vector2.new(36, 36)
         mobileButton.ImageColor3 = self.config.Theme.Text
         mobileButton.Parent = self.gui
         
-        -- Criar UI Corner para o botão
+        -- Add corner radius
         local buttonCorner = Instance.new("UICorner")
         buttonCorner.CornerRadius = UDim.new(0, 20)
         buttonCorner.Parent = mobileButton
         
-        -- Tornar arrastável
+        -- Make draggable
         local dragging = false
         local dragInput
         local dragStart
         local startPos
+        
+        local function updateDrag(input)
+            if dragging and dragInput and dragStart then
+                local delta = input.Position - dragStart
+                local newPosition = UDim2.new(
+                    startPos.X.Scale,
+                    math.clamp(startPos.X.Offset + delta.X, 0, workspace.CurrentCamera.ViewportSize.X - 40),
+                    startPos.Y.Scale,
+                    math.clamp(startPos.Y.Offset + delta.Y, 0, workspace.CurrentCamera.ViewportSize.Y - 40)
+                )
+                mobileButton.Position = newPosition
+            end
+        end
         
         mobileButton.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -267,17 +337,11 @@ function LolvyUI:SetupMobileSupport()
         
         UserInputService.InputChanged:Connect(function(input)
             if input == dragInput and dragging then
-                local delta = input.Position - dragStart
-                mobileButton.Position = UDim2.new(
-                    startPos.X.Scale, 
-                    startPos.X.Offset + delta.X,
-                    startPos.Y.Scale,
-                    startPos.Y.Offset + delta.Y
-                )
+                updateDrag(input)
             end
         end)
         
-        -- Adicionar evento de clique para abrir/fechar o hub
+        -- Toggle visibility on click
         mobileButton.Activated:Connect(function()
             self:ToggleVisibility()
         end)
@@ -286,23 +350,27 @@ function LolvyUI:SetupMobileSupport()
     end
 end
 
--- Alternar a visibilidade do hub
+-- Toggle UI visibility
 function LolvyUI:ToggleVisibility()
+    if self.destroyed then return end
+    
     self.visible = not self.visible
     self.mainFrame.Visible = self.visible
     self.titleLabel.Visible = self.visible
 end
 
--- Adicionar uma nova aba
+-- Add a new tab
 function LolvyUI:AddTab(tabName, icon)
-    -- Verificar se a aba já existe
+    if self.destroyed then return end
+    
+    -- Check for existing tab
     for _, tab in ipairs(self.tabs) do
         if tab.name == tabName then
             return tab
         end
     end
     
-    -- Criar botão de aba
+    -- Create tab button
     local tabButton = Instance.new("TextButton")
     tabButton.Name = tabName .. "Tab"
     tabButton.Size = UDim2.new(1, -10, 0, 40)
@@ -315,7 +383,7 @@ function LolvyUI:AddTab(tabName, icon)
     tabButton.BorderSizePixel = 0
     tabButton.Parent = self.tabsList
     
-    -- Adicionar ícone se fornecido
+    -- Add icon if provided
     if icon then
         local iconImage = Instance.new("ImageLabel")
         iconImage.Size = UDim2.new(0, 16, 0, 16)
@@ -323,17 +391,15 @@ function LolvyUI:AddTab(tabName, icon)
         iconImage.BackgroundTransparency = 1
         iconImage.Image = icon
         iconImage.Parent = tabButton
-        
-        -- Ajustar o texto para acomodar o ícone
         tabButton.TextXAlignment = Enum.TextXAlignment.Right
     end
     
-    -- Arredondar cantos
+    -- Add corner radius
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = tabButton
     
-    -- Criar contêiner de conteúdo para esta aba
+    -- Create content frame
     local contentFrame = Instance.new("ScrollingFrame")
     contentFrame.Name = tabName .. "Content"
     contentFrame.Size = UDim2.new(1, -20, 1, -20)
@@ -343,20 +409,23 @@ function LolvyUI:AddTab(tabName, icon)
     contentFrame.ScrollBarImageColor3 = self.config.Theme.ToggleOn
     contentFrame.BorderSizePixel = 0
     contentFrame.Visible = false
-    contentFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Será atualizado dinamicamente
+    contentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
     contentFrame.Parent = self.contentContainer
     
+    -- Add layout
     local contentLayout = Instance.new("UIListLayout")
     contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
     contentLayout.Padding = UDim.new(0, 10)
     contentLayout.Parent = contentFrame
     
-    -- Atualizar o layout automaticamente
+    -- Auto-update canvas size
     contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        contentFrame.CanvasSize = UDim2.new(0, 0, 0, contentLayout.AbsoluteContentSize.Y + 20)
+        if not self.destroyed then
+            contentFrame.CanvasSize = UDim2.new(0, 0, 0, contentLayout.AbsoluteContentSize.Y + 20)
+        end
     end)
     
-    -- Criar nova aba
+    -- Create tab object
     local tab = {
         name = tabName,
         button = tabButton,
@@ -365,46 +434,45 @@ function LolvyUI:AddTab(tabName, icon)
         elementCount = 0
     }
     
-    -- Adicionar a aba à lista
+    -- Add to tabs list
     table.insert(self.tabs, tab)
     
-    -- Configurar evento de clique
+    -- Setup click handler
     tabButton.Activated:Connect(function()
-        self:SelectTab(tabName)
+        if not self.destroyed then
+            self:SelectTab(tabName)
+        end
     end)
     
-    -- Se for a primeira aba, selecioná-la automaticamente
+    -- Select if first tab
     if #self.tabs == 1 then
         self:SelectTab(tabName)
     end
     
-    -- Atualizar o tamanho
-    self:UpdateSize()
-    
     return tab
 end
 
--- Selecionar uma aba
+-- Select a tab
 function LolvyUI:SelectTab(tabName)
-    -- Esconder todas as abas
-    for _, tab in ipairs(self.tabs) do
-        tab.contentFrame.Visible = false
-        tab.button.BackgroundColor3 = self.config.Theme.TabUnselected
-    end
+    if self.destroyed then return end
     
-    -- Mostrar a aba selecionada
+    -- Update all tabs
     for _, tab in ipairs(self.tabs) do
+        tab.contentFrame.Visible = (tab.name == tabName)
+        tab.button.BackgroundColor3 = (tab.name == tabName) 
+            and self.config.Theme.TabSelected 
+            or self.config.Theme.TabUnselected
+        
         if tab.name == tabName then
-            tab.contentFrame.Visible = true
-            tab.button.BackgroundColor3 = self.config.Theme.TabSelected
             self.currentTab = tab
-            break
         end
     end
 end
 
--- Adicionar separador ao conteúdo
+-- Add a divider
 function LolvyUI:AddDivider(tabName, text)
+    if self.destroyed then return end
+    
     local tab = self:GetTab(tabName)
     if not tab then return nil end
     
@@ -451,8 +519,10 @@ function LolvyUI:AddDivider(tabName, text)
     return divider
 end
 
--- Adicionar botão
+-- Add a button
 function LolvyUI:AddButton(tabName, buttonText, callback)
+    if self.destroyed then return end
+    
     local tab = self:GetTab(tabName)
     if not tab then return nil end
     
@@ -468,23 +538,27 @@ function LolvyUI:AddButton(tabName, buttonText, callback)
     button.LayoutOrder = tab.elementCount
     button.Parent = tab.contentFrame
     
-    -- Arredondar cantos
+    -- Add corner radius
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 4)
     corner.Parent = button
     
-    -- Efeito de hover
+    -- Hover effect
     button.MouseEnter:Connect(function()
-        button.BackgroundColor3 = self.config.Theme.ButtonHover
+        if not self.destroyed then
+            button.BackgroundColor3 = self.config.Theme.ButtonHover
+        end
     end)
     
     button.MouseLeave:Connect(function()
-        button.BackgroundColor3 = self.config.Theme.Button
+        if not self.destroyed then
+            button.BackgroundColor3 = self.config.Theme.Button
+        end
     end)
     
-    -- Conectar callback
+    -- Click handler
     button.Activated:Connect(function()
-        if typeof(callback) == "function" then
+        if not self.destroyed and typeof(callback) == "function" then
             callback()
         end
     end)
@@ -493,15 +567,16 @@ function LolvyUI:AddButton(tabName, buttonText, callback)
     return button
 end
 
--- Adicionar toggle
+-- Add a toggle
 function LolvyUI:AddToggle(tabName, toggleText, default, callback)
+    if self.destroyed then return end
+    
     local tab = self:GetTab(tabName)
     if not tab then return nil end
     
-    -- Estado inicial
     local toggled = default or false
     
-    -- Container
+    -- Create container
     local container = Instance.new("Frame")
     container.Name = "Toggle" .. tab.elementCount
     container.Size = UDim2.new(1, 0, 0, 35)
@@ -509,11 +584,10 @@ function LolvyUI:AddToggle(tabName, toggleText, default, callback)
     container.LayoutOrder = tab.elementCount
     container.Parent = tab.contentFrame
     
-    -- Label
+    -- Add label
     local label = Instance.new("TextLabel")
     label.Name = "Label"
     label.Size = UDim2.new(0.7, -10, 1, 0)
-    label.Position = UDim2.new(0, 0, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = toggleText
     label.TextColor3 = self.config.Theme.Text
@@ -522,7 +596,7 @@ function LolvyUI:AddToggle(tabName, toggleText, default, callback)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = container
     
-    -- Botão de toggle
+    -- Add toggle button
     local toggleButton = Instance.new("TextButton")
     toggleButton.Name = "ToggleButton"
     toggleButton.Size = UDim2.new(0.3, 0, 1, 0)
@@ -535,13 +609,15 @@ function LolvyUI:AddToggle(tabName, toggleText, default, callback)
     toggleButton.BorderSizePixel = 0
     toggleButton.Parent = container
     
-    -- Arredondar cantos
+    -- Add corner radius
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 4)
     corner.Parent = toggleButton
     
-    -- Função para atualizar o toggle
+    -- Toggle function
     local function updateToggle()
+        if self.destroyed then return end
+        
         toggled = not toggled
         toggleButton.BackgroundColor3 = toggled and self.config.Theme.ToggleOn or self.config.Theme.Button
         toggleButton.Text = toggled and "ON" or "OFF"
@@ -551,37 +627,40 @@ function LolvyUI:AddToggle(tabName, toggleText, default, callback)
         end
     end
     
-    -- Conectar callback
+    -- Click handler
     toggleButton.Activated:Connect(updateToggle)
     
-    -- API para o toggle
+    -- Toggle API
     local toggleAPI = {
         SetValue = function(value)
+            if self.destroyed then return end
             if toggled ~= value then
-                toggled = not toggled -- Inverter para que updateToggle funcione corretamente
+                toggled = not value -- Invert for updateToggle
                 updateToggle()
             end
-        },
+        end,
         GetValue = function()
             return toggled
-        }
+        end
     }
     
     tab.elementCount = tab.elementCount + 1
     return toggleAPI
 end
 
--- Adicionar campo de entrada numérica
+-- Add a number input
 function LolvyUI:AddNumberInput(tabName, labelText, default, min, max, callback)
+    if self.destroyed then return end
+    
     local tab = self:GetTab(tabName)
     if not tab then return nil end
     
-    -- Valores padrão
+    -- Default values
     default = default or 0
     min = min or -math.huge
     max = max or math.huge
     
-    -- Container
+    -- Create container
     local container = Instance.new("Frame")
     container.Name = "NumberInput" .. tab.elementCount
     container.Size = UDim2.new(1, 0, 0, 35)
@@ -589,11 +668,10 @@ function LolvyUI:AddNumberInput(tabName, labelText, default, min, max, callback)
     container.LayoutOrder = tab.elementCount
     container.Parent = tab.contentFrame
     
-    -- Label
+    -- Add label
     local label = Instance.new("TextLabel")
     label.Name = "Label"
     label.Size = UDim2.new(0.5, -10, 1, 0)
-    label.Position = UDim2.new(0, 0, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = labelText
     label.TextColor3 = self.config.Theme.Text
@@ -602,7 +680,7 @@ function LolvyUI:AddNumberInput(tabName, labelText, default, min, max, callback)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = container
     
-    -- Campo de entrada
+    -- Add input box
     local inputBox = Instance.new("TextBox")
     inputBox.Name = "InputBox"
     inputBox.Size = UDim2.new(0.5, 0, 1, 0)
@@ -615,13 +693,15 @@ function LolvyUI:AddNumberInput(tabName, labelText, default, min, max, callback)
     inputBox.BorderSizePixel = 0
     inputBox.Parent = container
     
-    -- Arredondar cantos
+    -- Add corner radius
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 4)
     corner.Parent = inputBox
     
-    -- Validar entrada
+    -- Input validation
     inputBox.FocusLost:Connect(function(enterPressed)
+        if self.destroyed then return end
+        
         local inputValue = tonumber(inputBox.Text)
         
         if not inputValue then
@@ -629,7 +709,7 @@ function LolvyUI:AddNumberInput(tabName, labelText, default, min, max, callback)
             return
         end
         
-        -- Limitar ao intervalo min/max
+        -- Clamp to range
         inputValue = math.clamp(inputValue, min, max)
         inputBox.Text = tostring(inputValue)
         
@@ -638,9 +718,11 @@ function LolvyUI:AddNumberInput(tabName, labelText, default, min, max, callback)
         end
     end)
     
-    -- API para o campo numérico
+    -- Number input API
     local numberInputAPI = {
         SetValue = function(value)
+            if self.destroyed then return end
+            
             if not tonumber(value) then return end
             value = math.clamp(tonumber(value), min, max)
             inputBox.Text = tostring(value)
@@ -648,26 +730,28 @@ function LolvyUI:AddNumberInput(tabName, labelText, default, min, max, callback)
             if typeof(callback) == "function" then
                 callback(value)
             end
-        },
+        end,
         GetValue = function()
             return tonumber(inputBox.Text) or default
-        }
+        end
     }
     
     tab.elementCount = tab.elementCount + 1
     return numberInputAPI
 end
 
--- Adicionar campo de entrada de texto
+-- Add a text input
 function LolvyUI:AddTextInput(tabName, labelText, default, placeholder, callback)
+    if self.destroyed then return end
+    
     local tab = self:GetTab(tabName)
     if not tab then return nil end
     
-    -- Valores padrão
+    -- Default values
     default = default or ""
-    placeholder = placeholder or "Digite aqui..."
+    placeholder = placeholder or "Type here..."
     
-    -- Container
+    -- Create container
     local container = Instance.new("Frame")
     container.Name = "TextInput" .. tab.elementCount
     container.Size = UDim2.new(1, 0, 0, 35)
@@ -675,11 +759,10 @@ function LolvyUI:AddTextInput(tabName, labelText, default, placeholder, callback
     container.LayoutOrder = tab.elementCount
     container.Parent = tab.contentFrame
     
-    -- Label
+    -- Add label
     local label = Instance.new("TextLabel")
     label.Name = "Label"
     label.Size = UDim2.new(0.4, -10, 1, 0)
-    label.Position = UDim2.new(0, 0, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = labelText
     label.TextColor3 = self.config.Theme.Text
@@ -688,7 +771,7 @@ function LolvyUI:AddTextInput(tabName, labelText, default, placeholder, callback
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = container
     
-    -- Campo de entrada
+    -- Add input box
     local inputBox = Instance.new("TextBox")
     inputBox.Name = "InputBox"
     inputBox.Size = UDim2.new(0.6, 0, 1, 0)
@@ -703,33 +786,42 @@ function LolvyUI:AddTextInput(tabName, labelText, default, placeholder, callback
     inputBox.ClearTextOnFocus = false
     inputBox.Parent = container
     
--- Callback quando o foco é perdido
+    -- Add corner radius
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = inputBox
+    
+    -- Input handler
     inputBox.FocusLost:Connect(function(enterPressed)
-        if typeof(callback) == "function" then
+        if not self.destroyed and typeof(callback) == "function" then
             callback(inputBox.Text)
         end
     end)
     
-    -- API para o campo de texto
+    -- Text input API
     local textInputAPI = {
         SetValue = function(value)
+            if self.destroyed then return end
+            
             inputBox.Text = tostring(value)
             
             if typeof(callback) == "function" then
                 callback(inputBox.Text)
             end
-        },
+        end,
         GetValue = function()
             return inputBox.Text
-        }
+        end
     }
     
     tab.elementCount = tab.elementCount + 1
     return textInputAPI
 end
 
--- Adicionar label
+-- Add a label
 function LolvyUI:AddLabel(tabName, labelText)
+    if self.destroyed then return end
+    
     local tab = self:GetTab(tabName)
     if not tab then return nil end
     
@@ -745,29 +837,33 @@ function LolvyUI:AddLabel(tabName, labelText)
     label.LayoutOrder = tab.elementCount
     label.Parent = tab.contentFrame
     
-    -- API para o label
+    -- Label API
     local labelAPI = {
         SetText = function(text)
-            label.Text = text
-        },
+            if not self.destroyed then
+                label.Text = text
+            end
+        end,
         GetText = function()
             return label.Text
-        }
+        end
     }
     
     tab.elementCount = tab.elementCount + 1
     return labelAPI
 end
 
--- Sistema de notificação
-function HorizontalHub:Notify(title, message, duration, notifType)
-    -- Configurações padrão
-    title = title or "Notificação"
+-- Show notification
+function LolvyUI:Notify(title, message, duration, notifType)
+    if self.destroyed then return end
+    
+    -- Default values
+    title = title or "Notification"
     message = message or ""
     duration = duration or 5
-    notifType = notifType or "info" -- info, success, error, warning
+    notifType = notifType or "info"
     
-    -- Definir cor com base no tipo
+    -- Get notification color
     local notifColor
     if notifType == "info" then
         notifColor = Color3.fromRGB(50, 100, 255)
@@ -781,7 +877,7 @@ function HorizontalHub:Notify(title, message, duration, notifType)
         notifColor = self.config.Theme.Button
     end
     
-    -- Criar notificação
+    -- Create notification frame
     local notificationFrame = Instance.new("Frame")
     notificationFrame.Name = "Notification"
     notificationFrame.Size = UDim2.new(0, 250, 0, 80)
@@ -790,16 +886,15 @@ function HorizontalHub:Notify(title, message, duration, notifType)
     notificationFrame.BorderSizePixel = 0
     notificationFrame.Parent = self.gui
     
-    -- Arredondar cantos
+    -- Add corner radius
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = notificationFrame
     
-    -- Barra colorida
+    -- Add color bar
     local colorBar = Instance.new("Frame")
     colorBar.Name = "ColorBar"
     colorBar.Size = UDim2.new(0, 5, 1, 0)
-    colorBar.Position = UDim2.new(0, 0, 0, 0)
     colorBar.BackgroundColor3 = notifColor
     colorBar.BorderSizePixel = 0
     colorBar.Parent = notificationFrame
@@ -808,7 +903,7 @@ function HorizontalHub:Notify(title, message, duration, notifType)
     colorBarCorner.CornerRadius = UDim.new(0, 6)
     colorBarCorner.Parent = colorBar
     
-    -- Título
+    -- Add title
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Name = "Title"
     titleLabel.Size = UDim2.new(1, -15, 0, 25)
@@ -821,7 +916,7 @@ function HorizontalHub:Notify(title, message, duration, notifType)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     titleLabel.Parent = notificationFrame
     
-    -- Mensagem
+    -- Add message
     local messageLabel = Instance.new("TextLabel")
     messageLabel.Name = "Message"
     messageLabel.Size = UDim2.new(1, -15, 0, 40)
@@ -837,7 +932,7 @@ function HorizontalHub:Notify(title, message, duration, notifType)
     messageLabel.TextWrapped = true
     messageLabel.Parent = notificationFrame
     
-    -- Botão de fechar
+    -- Add close button
     local closeButton = Instance.new("TextButton")
     closeButton.Name = "CloseButton"
     closeButton.Size = UDim2.new(0, 20, 0, 20)
@@ -849,13 +944,13 @@ function HorizontalHub:Notify(title, message, duration, notifType)
     closeButton.TextSize = 18
     closeButton.Parent = notificationFrame
     
-    -- Adicionar à lista de notificações
+    -- Add to notifications list
     table.insert(self.notifications, notificationFrame)
     
-    -- Ajustar posições
+    -- Update positions
     self:UpdateNotificationPositions()
     
-    -- Animação de entrada
+    -- Slide in animation
     notificationFrame:TweenPosition(
         UDim2.new(1, -270, notificationFrame.Position.Y.Scale, 0),
         Enum.EasingDirection.Out,
@@ -864,9 +959,11 @@ function HorizontalHub:Notify(title, message, duration, notifType)
         true
     )
     
-    -- Função para remover a notificação
+    -- Remove notification function
     local function removeNotification()
-        -- Remover da lista
+        if self.destroyed then return end
+        
+        -- Remove from list
         for i, notif in ipairs(self.notifications) do
             if notif == notificationFrame then
                 table.remove(self.notifications, i)
@@ -874,7 +971,7 @@ function HorizontalHub:Notify(title, message, duration, notifType)
             end
         end
         
-        -- Animação de saída
+        -- Slide out animation
         notificationFrame:TweenPosition(
             UDim2.new(1, 20, notificationFrame.Position.Y.Scale, 0),
             Enum.EasingDirection.Out,
@@ -882,18 +979,22 @@ function HorizontalHub:Notify(title, message, duration, notifType)
             0.5,
             true,
             function()
-                notificationFrame:Destroy()
-                self:UpdateNotificationPositions()
+                if notificationFrame and notificationFrame.Parent then
+                    notificationFrame:Destroy()
+                    if not self.destroyed then
+                        self:UpdateNotificationPositions()
+                    end
+                end
             end
         )
     end
     
-    -- Configurar botão de fechar
+    -- Setup close button
     closeButton.Activated:Connect(removeNotification)
     
-    -- Auto-fechar após a duração
+    -- Auto close
     task.delay(duration, function()
-        if notificationFrame and notificationFrame.Parent then
+        if notificationFrame and notificationFrame.Parent and not self.destroyed then
             removeNotification()
         end
     end)
@@ -901,8 +1002,10 @@ function HorizontalHub:Notify(title, message, duration, notifType)
     return notificationFrame
 end
 
--- Atualizar posições das notificações
+-- Update notification positions
 function LolvyUI:UpdateNotificationPositions()
+    if self.destroyed then return end
+    
     for i, notif in ipairs(self.notifications) do
         notif:TweenPosition(
             UDim2.new(1, notif.Position.X.Offset, 0.1 + ((i - 1) * 0.12), 0),
@@ -914,8 +1017,10 @@ function LolvyUI:UpdateNotificationPositions()
     end
 end
 
--- Obter uma aba por nome
+-- Get tab by name
 function LolvyUI:GetTab(tabName)
+    if self.destroyed then return nil end
+    
     for _, tab in ipairs(self.tabs) do
         if tab.name == tabName then
             return tab
@@ -924,11 +1029,21 @@ function LolvyUI:GetTab(tabName)
     return nil
 end
 
--- Destruir o hub
+-- Destroy the UI
 function LolvyUI:Destroy()
+    if self.destroyed then return end
+    
+    self.destroyed = true
+    
     if self.gui then
         self.gui:Destroy()
     end
+    
+    -- Clear references
+    self.tabs = nil
+    self.currentTab = nil
+    self.notifications = nil
+    self.config = nil
 end
 
 return LolvyUI
